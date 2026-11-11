@@ -1,6 +1,26 @@
 
 # Sentinel — Security Operations Dashboard
 
+
+## Dashboard Screenshots
+
+### Security Overview
+![Sentinel Security Overview](screenshots/dashboard.jpeg)
+
+### Login Activity Analytics
+![Login Activity Analytics](screenshots/analytics.jpeg)
+
+### Threat Simulation Lab
+![Threat Simulation Lab](screenshots/simulation.jpeg)
+
+### Security Alert Management
+![Security Alert Management](screenshots/alerts.jpeg)
+
+### Recent Login Activity
+![Recent Login Activity](screenshots/login-activity.jpeg)
+
+---
+
 Sentinel is a full-stack cybersecurity portfolio project designed to detect, investigate, and manage suspicious authentication activity.
 
 The application analyzes login events, identifies potential security threats, and provides an interactive dashboard for security investigation and incident management.
