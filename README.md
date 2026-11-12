@@ -2,6 +2,10 @@
 # Sentinel — Security Operations Dashboard
 
 
+[![Sentinel Backend Tests](https://github.com/srochdi/Sentinel/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/srochdi/Sentinel/actions/workflows/backend-tests.yml)
+
+
+
 ## Dashboard Screenshots
 
 ### Security Overview
