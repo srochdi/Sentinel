@@ -64,6 +64,25 @@ The application analyzes login events, identifies potential security threats, an
 - Export authentication events to CSV.
 - Include investigation notes in alert reports.
 
+
+## System Architecture
+
+```mermaid
+flowchart TD
+    A["React + TypeScript Frontend"]
+    B["Python FastAPI Backend"]
+    C["Threat Detection Engine"]
+    D[("SQLite Database")]
+
+    A <-->|HTTP / REST API| B
+    B --> C
+    B <-->|Read / Write| D
+    C -->|Detected Threats| B
+```
+
+Sentinel uses a React frontend to display authentication activity and security alerts. The FastAPI backend processes requests, executes threat detection logic, and stores events, alerts, and investigation information in SQLite.
+
+
 ## Technology Stack
 
 **Frontend**
