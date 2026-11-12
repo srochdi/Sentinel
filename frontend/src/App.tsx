@@ -45,6 +45,18 @@ type AlertCounts = {
   total: number
 }
 
+
+type IpRiskAssessment = {
+  ip_address: string
+  failed_logins: number
+  successful_logins: number
+  unique_usernames: number
+  alert_count: number
+  risk_score: number
+  risk_level: 'Low' | 'Medium' | 'High' | 'Critical'
+  reasons: string[]
+}
+
 type AnalysisResult = {
   events_analyzed: number
   total_alerts: number
@@ -78,6 +90,11 @@ const statusLabels: Record<AlertStatus, string> = {
 function App() {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([])
   const [events, setEvents] = useState<LoginEvent[]>([])
+
+  const [ipRisks, setIpRisks] = useState<
+    Record<string, IpRiskAssessment>
+  >({})
+
 
   const [alertCounts, setAlertCounts] = useState<AlertCounts>({
     new: 0,
@@ -146,12 +163,45 @@ function App() {
       const eventsData = await eventsResponse.json()
       const countsData: AlertCounts = await countsResponse.json()
 
+      // Retrieve risk assessments for each unique alert IP.
+      const uniqueIps: string[] = [
+        ...new Set(
+          (alertsData.alerts as SecurityAlert[]).map(
+            (alert) => alert.ip_address
+          )
+        )
+      ]
+
+      const riskResults = await Promise.allSettled(
+        uniqueIps.map(async (ip): Promise<IpRiskAssessment> => {
+          const response = await fetch(
+            `${API_URL}/risk/ip/${encodeURIComponent(ip)}`
+          )
+
+          if (!response.ok) {
+            throw new Error(`Unable to assess risk for ${ip}`)
+          }
+
+          return (await response.json()) as IpRiskAssessment
+        })
+      )
+
+      const updatedRisks: Record<string, IpRiskAssessment> = {}
+
+      riskResults.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          updatedRisks[result.value.ip_address] = result.value
+        }
+      })
+
       if (mounted.current && !statusUpdateBusy.current) {
         setAlerts(alertsData.alerts)
         setEvents(eventsData.events)
         setAlertCounts(countsData)
+        setIpRisks(updatedRisks)
         setError('')
       }
+
     } catch {
       if (mounted.current) {
         setError('Cannot connect to Sentinel backend')
@@ -848,6 +898,65 @@ function App() {
                   <p>
                     {alert.ip_address} — {alert.description}
                   </p>
+
+                  {ipRisks[alert.ip_address] && (
+                    <div className="ip-risk-container">
+                      <div className="ip-risk-header">
+                        <span className="ip-risk-label">
+                          IP Risk Assessment
+                        </span>
+
+                        <span
+                          className={`ip-risk-badge risk-${ipRisks[
+                            alert.ip_address
+                          ].risk_level.toLowerCase()}`}
+                        >
+                          {ipRisks[alert.ip_address].risk_level} Risk
+                        </span>
+                      </div>
+
+                      <div className="ip-risk-score">
+                        <strong>
+                          {ipRisks[alert.ip_address].risk_score}
+                        </strong>
+                        <span>/100</span>
+                      </div>
+
+                      <div className="ip-risk-track">
+                        <div
+                          className={`ip-risk-fill risk-${ipRisks[
+                            alert.ip_address
+                          ].risk_level.toLowerCase()}`}
+                          style={{
+                            width: `${
+                              ipRisks[alert.ip_address].risk_score
+                            }%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+
+                      {ipRisks[alert.ip_address].reasons.length > 0 && (
+                        <div className="ip-risk-reasons">
+                          <p className="ip-risk-reasons-title">
+                            Risk Factors
+                          </p>
+
+                          <ul>
+                            {ipRisks[alert.ip_address].reasons.map(
+                              (reason, index) => (
+                                <li key={`${reason}-${index}`}>
+                                  {reason}
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+
 
                   <div className="alert-badge-row">
                     <span

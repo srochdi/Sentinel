@@ -1,5 +1,6 @@
 import csv
 import io
+import database
 
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
@@ -9,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from risk_engine import calculate_ip_risk
 
 from detector import analyze_threats
 
@@ -571,3 +573,88 @@ def export_events():
                 'attachment; filename="sentinel_events.csv"'
         }
     )
+
+
+@app.post("/risk/assess")
+def assess_ip_risk(
+    failed_logins: int,
+    successful_logins: int,
+    unique_usernames: int,
+    alert_count: int
+):
+    """
+    Assess IP risk based on authentication activity.
+
+    Returns a risk score from 0 to 100,
+    a risk level, and explanations.
+    """
+
+    return calculate_ip_risk(
+        failed_logins=failed_logins,
+        successful_logins=successful_logins,
+        unique_usernames=unique_usernames,
+        alert_count=alert_count
+    )
+
+
+@app.get("/risk/ip/{ip_address}")
+def get_ip_risk(ip_address: str):
+    """
+    Calculate an IP address's risk score using
+    authentication events and security alerts
+    stored in SQLite.
+    """
+
+    # Retrieve stored authentication events and alerts.
+    events = database.get_saved_events()
+    alerts = database.get_saved_alerts()
+
+    # Filter authentication events by IP address.
+    ip_events = [
+        event for event in events
+        if event["ip_address"] == ip_address
+    ]
+
+    # Filter security alerts by IP address.
+    ip_alerts = [
+        alert for alert in alerts
+        if alert["ip_address"] == ip_address
+    ]
+
+    # Count failed and successful logins.
+    failed_logins = sum(
+        1 for event in ip_events
+        if str(event["status"]).lower() in ("failed", "failure")
+    )
+
+    successful_logins = sum(
+        1 for event in ip_events
+        if str(event["status"]).lower() in ("success", "successful")
+    )
+
+    # Count unique usernames targeted by failed logins.
+    unique_usernames = len({
+        event["username"]
+        for event in ip_events
+        if str(event["status"]).lower() in ("failed", "failure")
+    })
+
+    # Count security alerts associated with this IP.
+    alert_count = len(ip_alerts)
+
+    # Calculate the risk score.
+    assessment = calculate_ip_risk(
+        failed_logins=failed_logins,
+        successful_logins=successful_logins,
+        unique_usernames=unique_usernames,
+        alert_count=alert_count
+    )
+
+    return {
+        "ip_address": ip_address,
+        "failed_logins": failed_logins,
+        "successful_logins": successful_logins,
+        "unique_usernames": unique_usernames,
+        "alert_count": alert_count,
+        **assessment
+    }

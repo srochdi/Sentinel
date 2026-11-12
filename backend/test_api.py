@@ -564,3 +564,118 @@ def test_export_events_csv(client):
     assert "Username" in csv_content
     assert "Login Status" in csv_content
     assert "admin" in csv_content
+
+
+def test_risk_assessment_high(client):
+    response = client.post(
+        "/risk/assess",
+        params={
+            "failed_logins": 10,
+            "successful_logins": 0,
+            "unique_usernames": 5,
+            "alert_count": 1
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["risk_score"] == 75
+    assert data["risk_level"] == "High"
+    assert len(data["reasons"]) == 3
+
+
+def test_risk_assessment_low(client):
+    response = client.post(
+        "/risk/assess",
+        params={
+            "failed_logins": 0,
+            "successful_logins": 5,
+            "unique_usernames": 1,
+            "alert_count": 0
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["risk_score"] == 0
+    assert data["risk_level"] == "Low"
+
+
+def test_risk_assessment_critical(client):
+    response = client.post(
+        "/risk/assess",
+        params={
+            "failed_logins": 15,
+            "successful_logins": 1,
+            "unique_usernames": 10,
+            "alert_count": 3
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["risk_score"] == 100
+    assert data["risk_level"] == "Critical"
+
+
+def test_database_ip_risk_no_activity(client):
+    response = client.get("/risk/ip/192.0.2.250")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["ip_address"] == "192.0.2.250"
+    assert data["failed_logins"] == 0
+    assert data["successful_logins"] == 0
+    assert data["unique_usernames"] == 0
+    assert data["alert_count"] == 0
+    assert data["risk_score"] == 0
+    assert data["risk_level"] == "Low"
+
+
+def test_database_ip_risk_response_structure(client):
+    response = client.get("/risk/ip/192.0.2.106")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    expected_fields = [
+        "ip_address",
+        "failed_logins",
+        "successful_logins",
+        "unique_usernames",
+        "alert_count",
+        "risk_score",
+        "risk_level",
+        "reasons",
+    ]
+
+    for field in expected_fields:
+        assert field in data
+
+
+def test_database_ip_risk_valid_score_range(client):
+    response = client.get("/risk/ip/192.0.2.106")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert 0 <= data["risk_score"] <= 100
+
+    assert data["risk_level"] in [
+        "Low",
+        "Medium",
+        "High",
+        "Critical",
+    ]
+
+    assert isinstance(data["reasons"], list)
