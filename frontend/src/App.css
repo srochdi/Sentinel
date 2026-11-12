@@ -1326,3 +1326,44 @@ input {
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* ========================================
+   IP THREAT INTELLIGENCE PANEL
+   ======================================== */
+
+.ip-intelligence-panel {
+  margin: 24px 0;
+}
+
+.ip-intelligence-panel h4 {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.ip-intelligence-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ip-intelligence-details .investigation-detail {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0f1c2e;
+}
+
+@media (max-width: 900px) {
+  .ip-intelligence-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 550px) {
+  .ip-intelligence-details {
+    grid-template-columns: 1fr;
+  }
+}

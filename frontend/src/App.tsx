@@ -1082,7 +1082,94 @@ function App() {
 
               {/* INVESTIGATION DETAILS */}
 
+              {/* IP THREAT INTELLIGENCE */}
+
+              {ipRisks[
+                selectedInvestigation.investigation.source_ip
+              ] && (
+                <div className="ip-intelligence-panel">
+                  <h4>IP Threat Intelligence</h4>
+
+                  <div className="ip-intelligence-details">
+                    <div className="investigation-detail">
+                      <span>Risk Score</span>
+                      <strong>
+                        {ipRisks[
+                          selectedInvestigation.investigation.source_ip
+                        ].risk_score}/100
+                      </strong>
+                    </div>
+
+                    <div className="investigation-detail">
+                      <span>Risk Level</span>
+                      <strong>
+                        {ipRisks[
+                          selectedInvestigation.investigation.source_ip
+                        ].risk_level}
+                      </strong>
+                    </div>
+
+                    <div className="investigation-detail">
+                      <span>Failed Logins</span>
+                      <strong>
+                        {ipRisks[
+                          selectedInvestigation.investigation.source_ip
+                        ].failed_logins}
+                      </strong>
+                    </div>
+
+                    <div className="investigation-detail">
+                      <span>Successful Logins</span>
+                      <strong>
+                        {ipRisks[
+                          selectedInvestigation.investigation.source_ip
+                        ].successful_logins}
+                      </strong>
+                    </div>
+
+                    <div className="investigation-detail">
+                      <span>Targeted Usernames</span>
+                      <strong>
+                        {ipRisks[
+                          selectedInvestigation.investigation.source_ip
+                        ].unique_usernames}
+                      </strong>
+                    </div>
+
+                    <div className="investigation-detail">
+                      <span>Associated Alerts</span>
+                      <strong>
+                        {ipRisks[
+                          selectedInvestigation.investigation.source_ip
+                        ].alert_count}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* RISK FACTORS */}
+
+                  {ipRisks[
+                    selectedInvestigation.investigation.source_ip
+                  ].reasons.length > 0 && (
+                    <div className="ip-intelligence-reasons">
+                      <h4>Risk Factors</h4>
+
+                      <ul>
+                        {ipRisks[
+                          selectedInvestigation.investigation.source_ip
+                        ].reasons.map((reason, index) => (
+                          <li key={`${reason}-${index}`}>
+                            {reason}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="investigation-details">
+
                 <div className="investigation-detail">
                   <span>Source IP</span>
                   <strong>
